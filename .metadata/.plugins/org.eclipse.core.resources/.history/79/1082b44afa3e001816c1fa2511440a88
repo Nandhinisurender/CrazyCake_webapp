@@ -1,0 +1,6 @@
+@charset "ISO-8859-1";
+#nav_bar{
+		height: 10vh;
+		width: 100vw;
+		background-color:   #663399;
+	}

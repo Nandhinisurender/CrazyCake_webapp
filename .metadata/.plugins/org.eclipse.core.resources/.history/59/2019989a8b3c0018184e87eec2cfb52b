@@ -1,0 +1,16 @@
+package com.niit.frontEnd.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class PageController {
+	
+
+	@RequestMapping("/")
+	public String gotoIndex()
+	{
+		System.out.println("reached pagecontorller");	
+		return "index";
+	}
+}

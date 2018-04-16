@@ -1,0 +1,53 @@
+
+Apr 09, 2018 12:42:01.13 NEW SESSION
+Apr 09, 2018 12:42:01.13 [5140:3064:0409/124201.120:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -105
+Apr 09, 2018 12:42:03.74 [5140:3064:0409/124203.743:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -105
+Apr 09, 2018 12:42:10.17 [5140:3064:0409/124210.175:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -105
+Apr 09, 2018 12:42:14.37 [5140:3064:0409/124214.374:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -105
+Apr 09, 2018 12:44:00.75 [5140:2320:0409/124400.755:ERROR:get_updates_processor.cc(244)] PostClientToServerMessage() failed during GetUpdates
+Apr 09, 2018 12:45:04.32 [5140:3064:0409/124504.320:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -105
+Apr 09, 2018 12:45:15.76 [5140:2320:0409/124515.761:ERROR:get_updates_processor.cc(244)] PostClientToServerMessage() failed during GetUpdates
+Apr 09, 2018 12:45:32.97 [5140:3064:0409/124532.979:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -21
+Apr 09, 2018 13:01:35.20 [5140:3064:0409/130135.199:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:01:35.71 [5140:3064:0409/130135.708:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:01:35.83 [5140:3064:0409/130135.833:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:02:47.74 [5140:3064:0409/130247.745:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:02:47.86 [5140:3064:0409/130247.863:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:02:47.94 [5140:3064:0409/130247.942:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:02:48.44 [5140:3064:0409/130248.447:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:12:53.19 [5140:3064:0409/131253.198:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:12:53.34 [5140:3064:0409/131253.341:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:12:53.43 [5140:3064:0409/131253.437:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:12:53.83 [5140:3064:0409/131253.833:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:12:54.99 [5140:3064:0409/131254.999:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 13:40:53.19 [5140:3064:0409/134053.193:ERROR:socket_stream.cc(210)] Closing stream with result -101
+Apr 09, 2018 13:40:55.88 [5140:3064:0409/134055.881:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -21
+Apr 09, 2018 13:40:58.96 [5140:3064:0409/134058.959:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -21
+Apr 09, 2018 14:02:53.97 [5140:3064:0409/140253.969:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 14:02:54.05 [5140:3064:0409/140254.054:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 14:02:54.62 [5140:3064:0409/140254.620:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 09, 2018 14:02:54.99 [5140:3064:0409/140254.990:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+
+Apr 10, 2018 11:13:50.65 NEW SESSION
+Apr 10, 2018 11:13:50.65 [5676:2872:0410/111350.122:ERROR:in_progress_cache_impl.cc(93)] Could not read download entries from file because there was a read failure.
+Apr 10, 2018 11:13:52.18 [5676:2872:0410/111352.181:ERROR:component_installer.cc(324)] Failed to read manifest or verify installation for Signed Tree Heads (C:\Users\Dell\AppData\Local\Google\Chrome\User Data\CertificateTransparency\715).: The system cannot find the file specified. (0x2)
+Apr 10, 2018 10:46:07.57 [5676:3608:0410/104607.570:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 10:46:08.12 [5676:3608:0410/104608.126:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 10:46:08.54 [5676:3608:0410/104608.543:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 10:46:09.25 [5676:3608:0410/104609.253:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 10:46:10.40 [5676:3608:0410/104610.400:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:03:26.75 [5676:3608:0410/110326.756:ERROR:socket_stream.cc(210)] Closing stream with result -101
+Apr 10, 2018 11:03:30.26 [5676:3608:0410/110330.267:ERROR:connection_factory_impl.cc(379)] Failed to connect to MCS endpoint with error -21
+Apr 10, 2018 11:28:15.22 [5676:3608:0410/112815.224:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:28:15.64 [5676:3608:0410/112815.647:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:28:15.83 [5676:3608:0410/112815.839:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:28:16.23 [5676:3608:0410/112816.238:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:28:17.06 [5676:3608:0410/112817.060:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:45:04.57 [5676:3608:0410/114504.577:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:45:04.62 [5676:3608:0410/114504.627:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:45:04.95 [5676:3608:0410/114504.951:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:45:05.28 [5676:3608:0410/114505.285:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:58:23.09 [5676:3608:0410/115823.091:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:58:23.20 [5676:3608:0410/115823.203:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:58:23.29 [5676:3608:0410/115823.292:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED
+Apr 10, 2018 11:58:23.67 [5676:3608:0410/115823.676:ERROR:upload_data_presenter.cc(73)] NOT IMPLEMENTED

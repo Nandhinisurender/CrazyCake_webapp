@@ -1,0 +1,1142 @@
+backend
+----------
+DBConfiguration
+----------------
+package com.niit.configuration;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import com.niit.model.Category;
+import com.niit.model.Product;
+
+import java.util.Properties;
+
+import javax.sql.DataSource;
+
+import org.apache.commons.dbcp.BasicDataSource;
+import org.hibernate.SessionFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.orm.hibernate4.HibernateTransactionManager;
+import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
+
+@Configuration
+@EnableTransactionManagement   //commit / rollback
+public class DBConfiguration {
+//to create beans
+	
+	@Bean(name="dataSource")
+	public DataSource getDataSource() {
+		System.out.println("Entering DataSource Bean creation method ");
+	    BasicDataSource dataSource = new BasicDataSource();
+	    dataSource.setDriverClassName("org.h2.Driver");
+	    dataSource.setUrl("jdbc:h2:tcp://localhost/~/s180396");
+	    dataSource.setUsername("sa");
+	    dataSource.setPassword("sa");
+	    System.out.println("DataSource bean " +dataSource);
+	    return dataSource;
+	}
+	/*
+	 * <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBuilder">
+	 * <property name="dataSource" ref="dataSource">
+	 */
+	@Bean //SessionFactory - factory of session objects
+	public SessionFactory sessionFactory() {
+		System.out.println("Entering sessionFactory creation method");
+		LocalSessionFactoryBuilder lsf=
+				new LocalSessionFactoryBuilder(getDataSource());
+		Properties hibernateProperties=new Properties();
+		hibernateProperties.setProperty(
+				"hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+		hibernateProperties.setProperty("hibernate.hbm2ddl.auto", "update");
+		hibernateProperties.setProperty("hibernate.show_sql", "true");
+		lsf.addProperties(hibernateProperties);
+		//An array of Class objects of all the entities
+		//Map all entities to relational table
+		Class classes[]=new Class[]{Product.class,Category.class};
+		//localsesionfactorybuilder -> sessionfactory -> map all entities with relation table
+		System.out.println("SessionFactory bean " + lsf);
+	    return lsf.addAnnotatedClasses(classes).buildSessionFactory();
+	}
+	@Bean
+	public HibernateTransactionManager hibTransManagement(){
+		return new HibernateTransactionManager(sessionFactory());
+	}
+}
+
+
+
+com.niit.model
+---------------
+Product
+--------
+package com.niit.model;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.Min;
+
+import org.hibernate.validator.constraints.NotEmpty;
+import org.springframework.web.multipart.MultipartFile;
+
+@Entity  //mapped with Product relational table
+@Table(name="product_s180396")
+public class Product {
+@Id
+@GeneratedValue(strategy=GenerationType.AUTO)
+private int id;
+@NotEmpty(message="ProductName cannot be blank(*)")
+private String productname;
+@NotEmpty(message="Product description is required(*)")
+private String productdescription;
+@Min(value=1,message="minimum quantity must be 1")
+private int quantity;
+@Min(value=1,message="minimum price must be 1")
+private double price;
+@ManyToOne
+@JoinColumn(name="cid")
+//FK category_id
+private Category category;
+@Transient //not persistent
+private MultipartFile image;
+public int getId() {
+	return id;
+}
+public void setId(int id) {
+	this.id = id;
+}
+public String getProductname() {
+	return productname;
+}
+public void setProductname(String productname) {
+	this.productname = productname;
+}
+public String getProductdescription() {
+	return productdescription;
+}
+public void setProductdescription(String productdescription) {
+	this.productdescription = productdescription;
+}
+public int getQuantity() {
+	return quantity;
+}
+public void setQuantity(int quantity) {
+	this.quantity = quantity;
+}
+public double getPrice() {
+	return price;
+}
+public void setPrice(double price) {
+	this.price = price;
+}
+
+public Category getCategory() {
+	return category;
+}
+public void setCategory(Category category) {
+	this.category = category;
+}
+
+
+public MultipartFile getImage() {
+	return image;
+}
+public void setImage(MultipartFile image) {
+	this.image = image;
+}
+@Override
+	public String toString() {
+		return "[" + this.id + " " + this.productname + " " + this.productdescription + " " + this.price + " " + this.quantity + " ]";
+	}
+}
+
+
+
+
+
+
+Category
+--------
+
+package com.niit.model;
+
+import java.util.List;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+@Entity
+//If category class has to mapped with the table name category_s180396
+@Table(name="category_s180396")
+public class Category {//Table name is Category_s180396
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+private int id;
+private String categoryname;
+@OneToMany(mappedBy="category")//Product entity we have property named category
+private List<Product> products;
+public int getId() {
+	return id;
+}
+public void setId(int id) {
+	this.id = id;
+}
+public String getCategoryname() {
+	return categoryname;
+}
+public void setCategoryname(String categoryname) {
+	this.categoryname = categoryname;
+}
+@Override
+	public String toString() {
+		return "Id: " + this.id + " " + "cn: "+this.categoryname; 
+	}
+
+}
+
+com.niit.dao
+-------------
+ProductDao
+
+package com.niit.dao;
+
+import java.util.List;
+
+import com.niit.model.Category;
+import com.niit.model.Product;
+
+public interface ProductDao {
+List<Product> getAllProducts();
+Product getProduct(int id);
+void deleteProduct(int id);
+void saveOrUpdateProduct(Product product);
+List<Category> getAllCategories();
+}
+
+
+ProductDaoImpl
+package com.niit.dao;
+
+import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.niit.model.Category;
+import com.niit.model.Product;
+@Repository
+@Transactional
+public class ProductDaoImpl implements ProductDao {
+	@Autowired
+private SessionFactory sessionFactory;
+	public ProductDaoImpl(){
+		System.out.println("ProductDaoImpl bean is created");
+	}
+	public List<Product> getAllProducts() {
+		Session session=sessionFactory.getCurrentSession();
+		String hqlString="from Product";//Product is name of the entity
+		//HQL - from Product
+		//SQL - select * from product_s180396
+		Query query=session.createQuery(hqlString);
+		List<Product> products=query.list();
+		return products;
+	}
+	public Product getProduct(int id) {
+		Session session=sessionFactory.getCurrentSession();
+		//API - session.get(EntityClassObject,PK)
+		//select * from TableTowhich entity is mapped where PK=?
+		
+		Product product=(Product)session.get(Product.class, id);
+		//id =1 or 2 or 3
+		//Select * from product_s180396 where id=1
+		return product;
+	}
+	public void deleteProduct(int id) {
+		Session session=sessionFactory.getCurrentSession();
+		Product product=(Product)session.get(Product.class, id);
+		//select * from product_s180396 where id=1
+		session.delete(product);
+		//delete from product_s180396 where id=1;
+	}
+	public void saveOrUpdateProduct(Product product) {
+	   Session session=sessionFactory.getCurrentSession();
+	   System.out.println("Id of the product " + product.getId());
+	   session.saveOrUpdate(product);
+	   //insert into product_s180396 values (?,....)
+	   //or update Product_s180396 set ...
+	   System.out.println("after inserting id of product is " + product.getId() );
+	}
+	public List<Category> getAllCategories() {
+		Session session=sessionFactory.getCurrentSession();
+		//select * from category_s180396
+		Query query=session.createQuery("from Category");
+		List<Category> categories=query.list();
+		return categories;
+	}
+	
+
+}
+
+
+
+
+
+
+
+com.niit.service
+----------------
+ProductService
+---------------
+package com.niit.services;
+
+import java.util.List;
+
+import com.niit.model.Category;
+import com.niit.model.Product;
+
+public interface ProductService {
+List<Product> getAllProducts();
+Product getProduct(int id);
+void deleteProduct(int id);
+void saveProduct(Product product);
+void updateProduct(Product product);
+List<Category> getAllCategories();
+}
+
+ProductServiceImpl
+-------------------
+package com.niit.services;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.niit.dao.ProductDao;
+import com.niit.model.Category;
+import com.niit.model.Product;
+@Service
+public class ProductServiceImpl implements ProductService {
+	@Autowired
+private ProductDao productDao;
+	public ProductServiceImpl(){
+		System.out.println("ProductServiceImpl bean is Created");
+	}
+	public List<Product> getAllProducts() {
+		return productDao.getAllProducts();
+	}
+	public Product getProduct(int id) {
+		//call dao 
+		return productDao.getProduct(id);
+	}
+	public void deleteProduct(int id) {
+		productDao.deleteProduct(id);
+	}
+	public void saveProduct(Product product) {
+		productDao.saveOrUpdateProduct(product);
+		
+	}
+	public void updateProduct(Product product) {
+		productDao.saveOrUpdateProduct(product);
+		
+	}
+	public List<Category> getAllCategories() {
+		return productDao.getAllCategories();
+	}
+
+}
+
+pom.xml
+--------
+<dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+     <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-orm</artifactId>
+    <version>4.3.2.RELEASE</version>
+    </dependency> 
+    <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>4.3.2.RELEASE</version>
+    </dependency>
+    <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-core</artifactId>
+    <version>4.3.2.RELEASE</version>
+    </dependency>
+    <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <version>4.3.2.RELEASE</version>
+    </dependency>
+    <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>4.0.1.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+            <version>1.0.1.Final</version>
+        </dependency>
+        <!--  h2 database -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.191</version>
+        </dependency>
+<dependency>
+    <groupId>commons-pool</groupId>
+    <artifactId>commons-pool</artifactId>
+    <version>1.5.4</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/commons-dbcp/commons-dbcp
+database connection pooling 
+-->
+<dependency>
+    <groupId>commons-dbcp</groupId>
+    <artifactId>commons-dbcp</artifactId>
+    <version>1.4</version>
+</dependency>
+ <!-- For validation -->
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>4.2.0.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>1.0.0.GA</version>
+        </dependency>
+
+<dependency>
+<!-- uploading an image -->
+<groupId>commons-fileupload</groupId>
+<artifactId>commons-fileupload</artifactId>
+<version>1.2.2</version>
+</dependency>
+<dependency>
+<groupId>commons-io</groupId>
+<artifactId>commons-io</artifactId>
+<version>2.4</version>
+</dependency>
+
+
+
+frontend
+--------------
+HomeController
+--------------
+package com.niit.controllers;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class HomeController {
+public HomeController(){
+	System.out.println("HomeController bean is created");
+}
+
+//This a handler method
+//It can handle the request "http://localhost:8080/project1frontend/home -> DispatcherServlet -> "home"->
+// /WEB-INF/views/home.jsp
+@RequestMapping(value="/home")
+public String getHomePage(){
+	return "home";
+}
+}
+
+ProductController
+------------------
+package com.niit.controllers;
+
+
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.niit.model.Category;
+import com.niit.model.Product;
+import com.niit.services.ProductService;
+
+@Controller
+public class ProductController {
+	@Autowired
+private ProductService productService;
+	public ProductController(){
+		System.out.println("ProductController bean is created");
+	}
+	
+	//http://localhost:8080/project1frontend/all/getproducts 
+	@RequestMapping(value="/all/getproducts")
+	public ModelAndView getAllProducts(){
+		List<Product> products=productService.getAllProducts();
+		//1st parameter - logical view name - productlist
+		//2nd parameter - model attribute name - refer it in jsp page
+		//3rd parameter - model [data] list of products
+		// /WEB-INF/views/productlist.jsp
+		return new ModelAndView("productlist","productsAttr",products);
+	}
+	@RequestMapping(value="/all/getproduct/{id}")  //id is pathvariable  id=1, id=2, id=3
+	//  all/getproduct/1  , all/getproduct/2 , all/getproduct/3...
+	public ModelAndView getProduct(@PathVariable int id){//id =1, 2, 3 
+		//Pass this id to Service -> Service has to pass the id to Dao -> select * from product where id=1
+		System.out.println("Product Id is " + id);
+		Product product=productService.getProduct(id);
+		System.out.println("Product is " + product );
+		return new ModelAndView("productdetails","product",product);
+		// 1st parameter productdetails - view name - jsp filename
+		//2nd parameter product  - model attribute - in jsp page to display the data
+		//3rd parameter product - model -data [1 1000.0 Product Description for toy car Toy Car 12]
+		//product = [1 1000.0 Product Description for toy car Toy Car 12]
+	}
+	
+	@RequestMapping(value="/admin/deleteproduct/{id}")
+	public String deleteProduct(@PathVariable int id,HttpServletRequest request) {
+		productService.deleteProduct(id);
+		String rootdirectory=request.getServletContext().getRealPath("/");
+		System.out.println("Root Directory " + rootdirectory);
+		//create a path
+		Path paths=Paths.get(rootdirectory+"/WEB-INF/resources/images/"+id+".png");
+		if(Files.exists(paths)){
+			try {
+				Files.delete(paths);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return "redirect:/all/getproducts";
+	}
+	@RequestMapping(value="/admin/getproductform")
+	public String getProductForm(Model model){//model to send data to the view
+		//Two model attributes
+		//product =new Product();
+		//categories = List<Category>
+		List<Category> categories=productService.getAllCategories();
+		model.addAttribute("product",new Product());
+		model.addAttribute("categories",categories);
+		System.out.println("Size of category list " + categories.size());
+		return "productform";
+	}
+	@RequestMapping(value="/admin/updateproductform/{id}")
+	public ModelAndView getUpdateProductForm(@PathVariable int id,Model model){
+		List<Category> categories=productService.getAllCategories();
+		model.addAttribute("categories",categories);
+		Product product=productService.getProduct(id);//select* from product_s180396 where id=?
+		return new ModelAndView("updateproductform","product",product);
+	}
+	
+	
+	@RequestMapping(value="/admin/saveproduct")
+	//product is the value entered by the user in the product form
+	//validate productname is notempty, productdescription is notempty, min price is 1,min quantity is 1
+	public String saveProduct(@Valid @ModelAttribute(name="product") Product product,BindingResult result,Model model,HttpServletRequest request){
+		if(result.hasErrors()){//hasErrors return true if product details in not valid
+			model.addAttribute("categories",productService.getAllCategories());
+			return "productform";
+		}
+		System.out.println("New Product Details " + product);
+		productService.saveProduct(product);
+		MultipartFile prodImage=product.getImage();//image uploaded in the productform.jsp
+		if(prodImage!=null && !prodImage.isEmpty()){
+			//how to get rootdirectory
+			String rootdirectory=request.getServletContext().getRealPath("/");
+			System.out.println("Root Directory " + rootdirectory);
+			//create a path
+			Path paths=Paths.get(rootdirectory+"/WEB-INF/resources/images/"+product.getId()+".png");
+			
+				//it throws checked exception
+				try {
+					prodImage.transferTo(new File(paths.toString()));
+				} catch (IllegalStateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
+		}
+		return "redirect:/all/getproducts";
+	}
+	
+	@RequestMapping(value="/admin/updateproduct")
+	public String updateProduct(@Valid @ModelAttribute(name="product") Product product,BindingResult result,Model model,HttpServletRequest request){
+		if(result.hasErrors()){
+			model.addAttribute("categories",productService.getAllCategories());
+			return "updateproductform";
+		}
+		System.out.println("New Product Details " + product);
+		productService.updateProduct(product);
+		
+		MultipartFile prodImage=product.getImage();//image uploaded in the productform.jsp
+		if(prodImage!=null && !prodImage.isEmpty()){
+			//how to get rootdirectory
+			String rootdirectory=request.getServletContext().getRealPath("/");
+			System.out.println("Root Directory " + rootdirectory);
+			//create a path
+			Path paths=Paths.get(rootdirectory+"/WEB-INF/resources/images/"+product.getId()+".png");
+			
+				//it throws checked exception
+				try {
+					prodImage.transferTo(new File(paths.toString()));
+				} catch (IllegalStateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
+		}
+		return "redirect:/all/getproducts";
+	}
+	
+	@RequestMapping(value="/all/searchbycategory")
+	public String searchByCategory(@RequestParam String searchCondition,Model model){
+		if(searchCondition.equals("All")){
+			model.addAttribute("searchCondition","");
+		}
+		else
+		model.addAttribute("searchCondition",searchCondition);
+		List<Product> products=productService.getAllProducts();
+		model.addAttribute("productsAttr",products);
+		return "productlist";
+	}
+}
+
+WEB-INF/resources/css
+------------
+
+
+navbar.css
+----------
+@CHARSET "ISO-8859-1";
+#nav_bar {
+background-color: #79B8B2;
+border-color: white;
+}
+#links a{
+     color:#400040;
+     font-size:18px;
+}
+
+
+table.css
+----------
+
+@CHARSET "ISO-8859-1";
+#thead{
+	background-color:#79B8B2
+}
+#tbody{
+	background-color:#C3E0E0;
+} 
+
+
+
+/WEB-INF/views
+---------------
+header.jsp
+----------
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+     <%@page isELIgnored="false" %>
+     <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+     <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="http://localhost:8080/project1frontend/resources/css/table.css">
+<link rel="stylesheet" href="http://localhost:8080/project1frontend/resources/css/navbar.css">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	
+	<!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js"></script>
+
+    <link href="https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css" rel="stylesheet"> 
+  
+</head>
+<body>
+<nav class="navbar navbar-inverse" id="nav_bar">
+		<div class="container-fluid">
+		<button type="button" class="navbar-toggle collapsed" 
+   data-toggle="collapse" data-target="#collapse-example" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+			<div class="navbar-header">
+			<!-- mapping /resources/**  -> /resources/images/niit.jpg
+			/WEB-INF/resources/images/niit.jpg
+			url - http://localhost:8080/project1frontend/resources/images/niit.jpg
+			 -->
+				<a class="navbar-brand" href="">
+		<img src='<c:url value="/resources/images/niit.jpg"></c:url>' alt="NIIT" height="30px" width="120px"></a>
+			</div>
+			<div class="collapse navbar-collapse" id="collapse-example">
+			<ul class="nav navbar-nav" id="links">
+				<li ><a href='<c:url value="/home"></c:url>'>Home</a></li>
+				<!-- value is for DispatcherServlet
+				DispatcherServlet using the value it has to find the handler method which can handle the request
+				http://localhost:8080/project1frontend/all/getproducts -> DispatcherServlet -> /all/getproducts
+				-> ProductController.getAllProducts() -> Service -> Dao -> Select * from product 
+				
+				controller returns ModelAndView [model is List<Product>,view is productlist]
+				/WEB-INF/views/productlist.jsp
+				 -->
+				<li><a href='<c:url value="/all/getproducts"></c:url>'>Browse All Products</a></li>
+				<li><a href='<c:url value="/admin/getproductform"></c:url>'>Add Product</a></li>
+				<li class="dropdown">
+			<a href="" class="dropdown-toggle" data-toggle="dropdown">
+                     Select by Category<b class="caret"></b></a>
+			<ul class="dropdown-menu">
+					<li >
+					<!-- Request parameter
+					parameter name is 'searchCondition' -->
+					   <a href='<c:url value="/all/searchbycategory?searchCondition=Kitchen and Dining"></c:url>'>Kitchen and Dining</a>
+					   <a href='<c:url value="/all/searchbycategory?searchCondition=Furniture"></c:url>'>Furniture</a>
+					   <a href='<c:url value="/all/searchbycategory?searchCondition=Education"></c:url>'>Education</a>
+					   <a href='<c:url value="/all/searchbycategory?searchCondition=Toys"></c:url>'>Toys</a>
+					   <a href='<c:url value="/all/searchbycategory?searchCondition=All"></c:url>'>All</a>
+                    </li>
+			</ul>
+			</li>
+			</ul>
+			</div>
+		</div>
+	</nav>
+</body>
+</html>
+
+
+productdetails.jsp
+-------------------
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ include file="header.jsp"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+	<div class="container">
+		<div class="panel panel-info" style="width: 450px">
+			<!-- product.getProductName() -->
+			<div class="panel-heading">Product Details</div>
+			<div class="panel-body">
+				<table>
+					<tr>
+						<td><b>ProductName</b>: ${product.productname }<br> <b>Category
+								Name</b>:${product.category.categoryname }<br> <b>Product
+								Description</b>: ${product.productdescription }<br> <b>Price
+						</b>: ${product.price }<br> <b>Quantity </b>:${product.quantity }
+						</td>
+						<td><img
+							src='<c:url value="/resources/images/${product.id }.png"></c:url>' height="250px" width="250px" alt="NA">
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<a href='<c:url value="/all/getproducts"></c:url>'>Back</a>
+</body>
+</html>
+
+
+
+
+
+
+productform.jsp
+---------------
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ include file="header.jsp"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+	<!-- using spring form tag, create a form to get input for product -->
+	<!-- product =new Product() -->
+	<!--  url=/admin/saveproduct -->
+	<div class="container">
+	<h3 align="center">Add Product</h3>
+	<c:url value="/admin/saveproduct" var="url"></c:url>
+	<form:form action='${url }' modelAttribute="product" role="form" enctype="multipart/form-data">
+		<!-- hidden field is for product id
+			product.setId(0)
+ 		-->
+		<form:hidden path="id" />
+        <div class="form-group">
+		<form:label path="productname">Enter product Name</form:label>
+		<!-- product.setProductname('Pen') -->
+		<form:input path="productname" class="form-control" style="width:750px"/>
+		<form:errors path="productname" cssStyle="color:red"></form:errors>
+        </div>
+        
+        <div class="form-group">
+		<form:label path="productdescription">Enter ProductDescription</form:label>
+		<!-- product.setProductDescription('.....') -->
+		<form:textarea path="productdescription"  class="form-control" style="width:750px"/>
+		<form:errors path="productdescription" cssStyle="color:red"></form:errors>
+        </div>
+        <div class="form-group">
+		<form:label path="quantity">Enter Quantity</form:label>
+		<!-- product.setQuantity(12) -->
+		<form:input path="quantity" class="form-control" style="width:750px"/>
+		<form:errors path="quantity" cssStyle="color:red" ></form:errors>
+        </div>
+        <div class="form-group">
+		<form:label path="price">Enter Price</form:label>
+		<!-- product.setPrice(..) -->
+		<form:input path="price" class="form-control" style="width:750px"/>
+		<form:errors path="price" cssStyle="color:red"></form:errors>
+        </div>
+        
+        <div class="form-group">
+        <!-- FK(cid) in Product table 
+        category.setId(100)..
+        -->
+        <form:label path="category.id">Select Category</form:label>
+     
+        <form:select path="category.id">
+        <c:forEach items="${categories }" var="c">
+        
+        <form:option value="${c.id }">${c.categoryname } </form:option>
+        </c:forEach>
+        </form:select>
+        </div>
+        
+        <div class="form-group">
+		<form:label path="image">Upload image</form:label>
+		<form:input type="file" path="image"></form:input>
+		</div>
+        
+		<input type="submit" value="Add Product">
+		
+		
+	</form:form>
+	</div>
+</body>
+</html>
+
+
+productlist.jsp
+----------------
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@page isELIgnored="false"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ include file="header.jsp"%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<script>
+	$(document).ready(function() {
+		var searchCondition = '${searchCondition}';
+		$('.table').DataTable({
+			"lengthMenu" : [ [  5, 7, -1 ], [  5, 7, "All" ] ],
+			"oSearch" : {
+				"sSearch" : searchCondition
+			}
+		})
+	});
+</script>
+<title>Insert title here</title>
+</head>
+<body>
+
+	<!-- for iteration - similar to for() in Java -->
+	<!-- productsAttr is a model attribute, to which we have assigned List<Product> -->
+	<!-- 
+productsAttr -> 
+p = 1 1000.0 Product Description for toy car Toy Car 12
+2 1300.0 Product Description Book 2
+ -->
+	<div class="container">
+		<b>List of Products</b>
+		<table class="table table-hover" border="2">
+			<thead id="thead">
+				<tr>
+				    <th>Image</th>
+					<th>ProductName</th>
+					<th>Category</th>
+					<th>Price</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody id="tbody">
+				<c:forEach items="${productsAttr }" var="p">
+					<tr>
+					  <td><img src='<c:url value="/resources/images/${p.id }.png" ></c:url>' alt="Image NA" height="50px" width="50px"></td>
+						<!-- p.getProductName() -->
+						<!-- p.getPrice() -->
+						<td>${p.productname }</td>
+						<!-- p.getCategory().getCategoryname() -->
+						<td>${p.category.categoryname }</td>
+						<td>${p.price }</td>
+						<!-- http://...../all/getproduct/1 
+					http://........../all/getproduct/2
+					http://..../all/getproduct/3
+					-->
+						<!--  when glyphicon info sign is clicked, request
+					 will be handled by the RequestMapping value 'all/getproduct/1 -->
+						<td><a
+							href='<c:url value="/all/getproduct/${p.id }"></c:url>'> <span
+								class="glyphicon glyphicon-info-sign"></span>
+
+						</a> <a href='<c:url value="/admin/deleteproduct/${p.id }"></c:url>'><span
+								class="glyphicon glyphicon-trash"></span></a>
+								
+						<a href='<c:url value="/admin/updateproductform/${p.id }"></c:url>'><span class="glyphicon glyphicon-pencil"></span></a>		
+						</td>
+								
+						
+					</tr>
+				</c:forEach>
+			</tbody>
+		</table>
+	</div>
+</body>
+
+</html>
+
+updateproductform.jsp
+---------------------
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ include file="header.jsp"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+	<!-- using spring form tag, create a form to get input for product -->
+	<!-- product =new Product() -->
+	<!--  url=/admin/saveproduct -->
+	<div class="container">
+	<h3 align="center">Update Product</h3>
+	<c:url value="/admin/updateproduct" var="url"></c:url>
+	<form:form action='${url }' modelAttribute="product" role="form" enctype="multipart/form-data">
+		<!-- hidden field is for product id
+			product.setId(0)
+ 		-->
+		<form:hidden path="id" />
+        <div class="form-group">
+		<form:label path="productname">Enter product Name</form:label>
+		<!-- product.setProductname('Pen') -->
+		<form:input path="productname" class="form-control" style="width:750px"/>
+		<form:errors path="productname"></form:errors>
+        </div>
+        
+        <div class="form-group">
+		<form:label path="productdescription">Enter ProductDescription</form:label>
+		<!-- product.setProductDescription('.....') -->
+		<form:textarea path="productdescription"  class="form-control" style="width:750px"/>
+		<form:errors path="productdescription"></form:errors>
+        </div>
+        <div class="form-group">
+		<form:label path="quantity">Enter Quantity</form:label>
+		<!-- product.setQuantity(12) -->
+		<form:input path="quantity" class="form-control" style="width:750px"/>
+		<form:errors path="quantity"></form:errors>
+        </div>
+        <div class="form-group">
+		<form:label path="price">Enter Price</form:label>
+		<!-- product.setPrice(..) -->
+		<form:input path="price" class="form-control" style="width:750px"/>
+		<form:errors path="price"></form:errors>
+        </div>
+        
+        <div class="form-group">
+        <form:label path="category.id">Select Category</form:label>
+     
+        <form:select path="category.id">
+        <c:forEach items="${categories }" var="c">
+        
+        <form:option value="${c.id }">${c.categoryname }  </form:option>
+        </c:forEach>
+        </form:select>
+        </div>
+        
+         <div class="form-group">
+		<form:label path="image">Upload image</form:label>
+		<form:input type="file" path="image"></form:input>
+		</div>
+		<input type="submit" value="Edit Product">
+	</form:form>
+	</div>
+</body>
+</html>
+
+
+dispatcher-servlet.xml
+-----------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/mvc
+       http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+       <!-- for auto-detecting the annotations @RequestMapping -->
+       <!-- enable spring mvc -->
+       <mvc:annotation-driven></mvc:annotation-driven>
+       
+       <!-- @Componentscan -->
+       <context:component-scan base-package="com.niit"></context:component-scan>
+       
+       <!-- to convert logical view name to actual view name -->
+       <!--  InternalResourceViewResolver -->
+       <!-- logical view name is 'hello' -->
+       <!--  prefix is /WEB-INF/views/ -->
+       <!-- suffix is .jsp -->
+       <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver" id="internalResourceViewResolver">
+       <property name="prefix" value="/WEB-INF/views/"></property>
+       <property name="suffix" value=".jsp"></property>  
+       </bean>
+       
+       <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+       <property name="maxUploadSize" value="10240000"></property>
+       </bean>
+       <!-- http://localhost:8080/project1frontend/resources/images/niit.jpg 
+       <img src='<c:url value="/resources/images/niit.jpg">'>
+                   /WEB-INF/resources/images/niit.jpg
+       -->
+       <mvc:resources location="/WEB-INF/resources/" mapping="/resources/**"></mvc:resources>
+</beans>
+
+
+
+
+
+
+
+web.xml
+-------
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+  <display-name>Archetype Created Web Application</display-name>
+  <servlet>
+		<servlet-name>dispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>dispatcher</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+</web-app>
+
+
+pom.xml file frontend
+----------------------
+ <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <version>4.3.2.RELEASE</version>
+    </dependency>
+    <dependency>
+    <groupId>com.niit</groupId>
+    <artifactId>project1backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+    <!--  JSTL tags -->
+	<dependency>
+	            <groupId>jstl</groupId>
+	            <artifactId>jstl</artifactId>
+	            <version>1.2</version>
+	        </dependency>
+	        <dependency>
+	            <groupId>taglibs</groupId>
+	            <artifactId>standard</artifactId>
+	            <version>1.1.2</version>
+	        </dependency>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
